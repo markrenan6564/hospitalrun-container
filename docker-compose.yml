@@ -1,0 +1,58 @@
+version: "2.1"
+
+services:
+  hospitalrun:
+    build: ./server
+    ports:
+      - "80:3000"
+    links:
+      - couchdb
+      - elasticsearch
+    depends_on:
+      - couchdb
+      - elasticsearch
+    restart: always
+    container_name: hospitalrun
+    network_mode: bridge
+
+  couchdb:
+    container_name: couchdb
+    restart: always
+    image: couchdb:1.7.2
+    volumes:
+      - db-data:/usr/local/var/lib/couchdb
+    ports:
+      - "5984:5984"
+    network_mode: bridge
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:5.3.1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    restart: always
+    network_mode: bridge
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=127.0.0.1
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: 1g
+    cap_add:
+      - IPC_LOCK
+
+volumes:
+  esdata:
+    driver: local
+  db-data:
+    driver: local
